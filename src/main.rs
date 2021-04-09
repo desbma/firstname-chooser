@@ -1,5 +1,14 @@
+use std::convert::TryInto;
+
+mod source;
+
 fn main() {
-    // https://www.insee.fr/fr/statistiques/2540004?sommaire=4767262
-    // TODO download https://www.insee.fr/fr/statistiques/fichier/2540004/nat2019_csv.zip
-    println!("Hello, world!");
+    // Init logger
+    simple_logger::SimpleLogger::new().init().unwrap();
+
+    // Get names
+    let source = source::InseeSource::new().expect("Failed to initialize data source");
+    let names: Vec<String> = source.try_into().expect("Failed to build names");
+
+    println!("{:?}", names);
 }
