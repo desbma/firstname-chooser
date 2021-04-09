@@ -1,7 +1,9 @@
+use crate::Sex;
 use itertools::Itertools;
 
 pub struct InseeSource {
     zip_filepath: std::path::PathBuf,
+    sex: Sex,
 }
 
 // https://stackoverflow.com/a/38406885
@@ -20,7 +22,7 @@ const INSEE_ZIP_URL: &str = "https://www.insee.fr/fr/statistiques/fichier/254000
 const INSEE_ZIP_FILENAME: &str = "nat2019_csv.zip";
 
 impl InseeSource {
-    pub fn new() -> anyhow::Result<InseeSource> {
+    pub fn new(sex: &Sex) -> anyhow::Result<InseeSource> {
         let binary_name = env!("CARGO_PKG_NAME");
         let xdg_dirs = xdg::BaseDirectories::with_prefix(binary_name)?;
         let zip_filepath = match xdg_dirs.find_cache_file(INSEE_ZIP_FILENAME) {
@@ -35,7 +37,10 @@ impl InseeSource {
             }
         };
 
-        Ok(InseeSource { zip_filepath })
+        Ok(InseeSource {
+            zip_filepath,
+            sex: sex.to_owned(),
+        })
     }
 }
 
@@ -55,7 +60,15 @@ impl std::convert::TryInto<Vec<String>> for InseeSource {
         log::info!("Parsing CSV data...");
         let rows: Vec<String> = csv
             .records()
-            .map(|r| r.unwrap().get(1).unwrap().to_string())
+            .map(Result::unwrap)
+            .filter(|r| {
+                r.get(0).unwrap()
+                    == match &self.sex {
+                        Sex::MALE => "1",
+                        Sex::FEMALE => "2",
+                    }
+            })
+            .map(|r| r.get(1).unwrap().to_string())
             .dedup()
             .map(title_case)
             .collect();

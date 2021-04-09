@@ -4,14 +4,14 @@ use structopt::StructOpt;
 
 mod source;
 
-#[derive(ArgEnum, Debug)]
+#[derive(ArgEnum, Clone, Debug)]
 pub enum Sex {
     MALE,
     FEMALE,
 }
 
 #[derive(StructOpt, Debug)]
-#[structopt(version=env!("CARGO_PKG_VERSION"), about="Help you naming a future being.")]
+#[structopt(version=env!("CARGO_PKG_VERSION"), about="Help you finding a name for a future human being.")]
 pub struct CommandLineOpts {
     /// Sex
     #[structopt(
@@ -32,7 +32,7 @@ fn main() {
     log::trace!("{:?}", opts);
 
     // Get names
-    let source = source::InseeSource::new().expect("Failed to initialize data source");
+    let source = source::InseeSource::new(&opts.sex).expect("Failed to initialize data source");
     let names: Vec<String> = source.try_into().expect("Failed to build names");
     log::trace!("{:?}", names);
 }
