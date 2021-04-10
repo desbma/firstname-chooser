@@ -2,6 +2,7 @@ use arg_enum_proc_macro::ArgEnum;
 use std::convert::TryInto;
 use structopt::StructOpt;
 
+mod graph;
 mod source;
 
 #[derive(ArgEnum, Clone, Debug)]
@@ -34,5 +35,9 @@ fn main() {
     // Get names
     let source = source::InseeSource::new(&opts.sex).expect("Failed to initialize data source");
     let names: Vec<String> = source.try_into().expect("Failed to build names");
-    log::trace!("{:?}", names);
+    log::debug!("{:?}", names);
+
+    // Build graph
+    let mut graph = graph::NameGraph::new(names.len());
+    graph.fill(names);
 }
