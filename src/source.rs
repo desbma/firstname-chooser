@@ -72,7 +72,6 @@ impl std::convert::TryInto<Vec<String>> for InseeSource {
             .dedup()
             .map(title_case)
             .collect();
-        println!("{:?}", rows);
 
         Ok(rows)
     }
