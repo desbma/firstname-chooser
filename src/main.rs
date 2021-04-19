@@ -41,7 +41,7 @@ fn main() {
     log::debug!("{:?}", names);
 
     // Build graph
-    let mut graph = graph::NameGraph::new(names.len());
+    let mut graph = graph::NameGraph::new();
     graph.fill(&names);
 }
 
@@ -56,7 +56,7 @@ mod tests {
         let names: Vec<String> = source.try_into().unwrap();
 
         b.iter(|| {
-            let mut graph = graph::NameGraph::new(names.len());
+            let mut graph = graph::NameGraph::new();
             graph.fill(&names);
         });
     }
