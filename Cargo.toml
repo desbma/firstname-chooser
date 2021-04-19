@@ -12,6 +12,7 @@ panic = "abort"
 [dependencies]
 arg_enum_proc_macro = "0.3"
 anyhow = "1.0"
+crossbeam = "0.8"
 csv = "1.1"
 log = { version = "0.4", features = ["max_level_trace", "release_max_level_info"] }
 indicatif = "0.15"

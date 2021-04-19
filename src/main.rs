@@ -1,3 +1,6 @@
+#![feature(test)]
+extern crate test;
+
 use arg_enum_proc_macro::ArgEnum;
 use std::convert::TryInto;
 use structopt::StructOpt;
@@ -28,7 +31,7 @@ fn main() {
     // Init logger
     simple_logger::SimpleLogger::new().init().unwrap();
 
-    // Command linea args
+    // Command line args
     let opts = CommandLineOpts::from_args();
     log::trace!("{:?}", opts);
 
@@ -39,5 +42,22 @@ fn main() {
 
     // Build graph
     let mut graph = graph::NameGraph::new(names.len());
-    graph.fill(names);
+    graph.fill(&names);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test::Bencher;
+
+    #[bench]
+    fn bench_add_two(b: &mut Bencher) {
+        let source = source::InseeSource::new(&Sex::MALE).unwrap();
+        let names: Vec<String> = source.try_into().unwrap();
+
+        b.iter(|| {
+            let mut graph = graph::NameGraph::new(names.len());
+            graph.fill(&names);
+        });
+    }
 }
