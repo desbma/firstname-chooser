@@ -68,10 +68,11 @@ impl std::convert::TryInto<Vec<String>> for InseeSource {
                         Sex::FEMALE => "2",
                     }
             })
-            .map(|r| r.get(1).unwrap().to_string())
+            .map(|r| unidecode::unidecode(r.get(1).unwrap()))
             .dedup()
             .map(title_case)
             .collect();
+        log::info!("Got {} names", rows.len());
 
         Ok(rows)
     }
