@@ -2,6 +2,7 @@
 extern crate test;
 
 use arg_enum_proc_macro::ArgEnum;
+use std::collections::HashMap;
 use std::convert::TryInto;
 use structopt::StructOpt;
 
@@ -41,8 +42,43 @@ fn main() {
     log::debug!("{:?}", names);
 
     // Build graph
-    let mut graph = graph::NameGraph::new();
+    let mut graph = graph::LevenshteinGraph::new();
     graph.fill(&names);
+
+    // Main loop
+    let mut prev_choices: HashMap<usize, bool> = HashMap::new();
+    let str_choices = vec![
+        "Hell yeah!",
+        "Mhh maybe...",
+        "Errh.. nope",
+        "Remind me of my previous choices",
+    ];
+    let mut cur_idx = graph.random();
+    loop {
+        // User input
+        let choice = dialoguer::Select::new()
+            .with_prompt(format!(
+                "What do you think of the name {:?}?",
+                names[cur_idx]
+            ))
+            .items(&str_choices)
+            .default(2)
+            .interact()
+            .unwrap();
+
+        // React to choice
+        match choice {
+            0 | 1 | 2 => {
+                // TODO differenciate between 0 and 1
+                prev_choices.insert(cur_idx, choice != 2);
+            }
+            3 => continue,
+            _ => unreachable!(),
+        }
+
+        // Next recommandation
+        cur_idx = graph.recommend(&prev_choices);
+    }
 }
 
 #[cfg(test)]
@@ -56,7 +92,7 @@ mod tests {
         let names: Vec<String> = source.try_into().unwrap();
 
         b.iter(|| {
-            let mut graph = graph::NameGraph::new();
+            let mut graph = graph::LevenshteinGraph::new();
             graph.fill(&names);
         });
     }
