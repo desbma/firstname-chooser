@@ -62,16 +62,22 @@ impl std::convert::TryInto<Vec<String>> for InseeSource {
             .records()
             .map(Result::unwrap)
             .filter(|r| {
+                // filter sex
                 r.get(0).unwrap()
                     == match &self.sex {
                         Sex::MALE => "1",
                         Sex::FEMALE => "2",
                     }
             })
-            .map(|r| unidecode::unidecode(r.get(1).unwrap()))
+            .map(|r| r.get(1).unwrap().to_owned())
+            .dedup()
+            .filter(|n| n.len() > 1) // filter out single letters
+            .filter(|n| *n != "_PRENOMS_RARES") // filter out source crap
+            .map(|n| unidecode::unidecode(&n)) // normalize accents
             .dedup()
             .map(title_case)
             .collect();
+        // TODO keep some other signals like frequency
         log::info!("Got {} names", rows.len());
 
         Ok(rows)
