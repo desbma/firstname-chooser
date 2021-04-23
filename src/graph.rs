@@ -23,7 +23,7 @@ impl NameGraph {
         progress.set_draw_delta(names.len() as u64 / 100);
 
         crossbeam::thread::scope(|scope| {
-            // Setup channel & thread pool to compute distances
+            // Setup channel & threads to compute distances
             let (work_tx, work_rx) = crossbeam::channel::unbounded();
             let (vec_tx, vec_rx) = crossbeam::channel::unbounded();
             for _ in 0..num_cpus::get() {
@@ -56,12 +56,10 @@ impl NameGraph {
 
     #[allow(dead_code)]
     pub fn get_distance(&self, a: usize, b: usize) -> Distance {
-        if a == b {
-            0.0
-        } else if a <= b {
-            self.distances[b][b - a - 1]
-        } else {
-            self.distances[a][a - b as usize - 1]
+        match a.cmp(&b) {
+            std::cmp::Ordering::Equal => 0.0,
+            std::cmp::Ordering::Less => self.distances[a][b - a - 1],
+            std::cmp::Ordering::Greater => self.distances[b][a - b - 1],
         }
     }
 
@@ -70,6 +68,41 @@ impl NameGraph {
         let name_b = &names[b];
         let dist = strsim::normalized_levenshtein(name_a, name_b);
         log::trace!("#{} {:?} - #{} {:?} = {}", a, name_a, b, name_b, dist);
-        dist as f32
+        1.0 - dist as Distance
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_compute_distance() {
+        let names = ["John".to_string(), "Johnny".to_string(), "Bob".to_string()];
+        assert_eq!(NameGraph::compute_distance(0, 0, &names), 0.0);
+        assert_eq!(NameGraph::compute_distance(0, 1, &names), 0.3333333);
+        assert_eq!(NameGraph::compute_distance(0, 2, &names), 0.75);
+        assert_eq!(NameGraph::compute_distance(1, 0, &names), 0.3333333);
+        assert_eq!(NameGraph::compute_distance(1, 1, &names), 0.0);
+        assert_eq!(NameGraph::compute_distance(1, 2, &names), 0.8333333);
+        assert_eq!(NameGraph::compute_distance(2, 0, &names), 0.75);
+        assert_eq!(NameGraph::compute_distance(2, 1, &names), 0.8333333);
+        assert_eq!(NameGraph::compute_distance(2, 2, &names), 0.0);
+    }
+
+    #[test]
+    fn test_get_distance() {
+        let mut graph = NameGraph::new();
+        let names = ["John".to_string(), "Johnny".to_string(), "Bob".to_string()];
+        graph.fill(&names);
+        assert_eq!(graph.get_distance(0, 0), 0.0);
+        assert_eq!(graph.get_distance(0, 1), 0.3333333);
+        assert_eq!(graph.get_distance(0, 2), 0.75);
+        assert_eq!(graph.get_distance(1, 0), 0.3333333);
+        assert_eq!(graph.get_distance(1, 1), 0.0);
+        assert_eq!(graph.get_distance(1, 2), 0.8333333);
+        assert_eq!(graph.get_distance(2, 0), 0.75);
+        assert_eq!(graph.get_distance(2, 1), 0.8333333);
+        assert_eq!(graph.get_distance(2, 2), 0.0);
     }
 }

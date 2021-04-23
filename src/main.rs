@@ -51,7 +51,7 @@ mod tests {
     use test::Bencher;
 
     #[bench]
-    fn bench_add_two(b: &mut Bencher) {
+    fn bench_fill_graph(b: &mut Bencher) {
         let source = source::InseeSource::new(&Sex::MALE).unwrap();
         let names: Vec<String> = source.try_into().unwrap();
 
