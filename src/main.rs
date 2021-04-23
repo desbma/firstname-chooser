@@ -72,7 +72,17 @@ fn main() {
                 // TODO differenciate between 0 and 1
                 prev_choices.insert(cur_idx, choice != 2);
             }
-            3 => continue,
+            3 => {
+                for (i, (idx, liked)) in prev_choices.iter().enumerate() {
+                    eprintln!(
+                        "#{:02} {} {:?}",
+                        i,
+                        if *liked { "👍" } else { "👎" },
+                        names[*idx]
+                    );
+                }
+                continue;
+            }
             _ => unreachable!(),
         }
 
