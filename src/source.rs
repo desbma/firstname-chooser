@@ -1,10 +1,15 @@
+use std::convert::TryInto;
+use std::fs::File;
+use std::io::copy;
+use std::path::PathBuf;
+
 use heck::TitleCase;
 use itertools::Itertools;
 
 use crate::Sex;
 
 pub struct InseeSource {
-    zip_filepath: std::path::PathBuf,
+    zip_filepath: PathBuf,
     sex: Sex,
 }
 
@@ -35,8 +40,8 @@ impl InseeSource {
                 log::info!("{}", INSEE_ZIP_URL);
                 let mut response = reqwest::blocking::get(INSEE_ZIP_URL)?.error_for_status()?;
                 let zip_filepath = xdg_dirs.place_cache_file(INSEE_ZIP_FILENAME)?;
-                let mut zip_file = std::fs::File::create(&zip_filepath)?;
-                std::io::copy(&mut response, &mut zip_file)?;
+                let mut zip_file = File::create(&zip_filepath)?;
+                copy(&mut response, &mut zip_file)?;
                 zip_filepath
             }
         };
@@ -48,12 +53,12 @@ impl InseeSource {
     }
 }
 
-impl std::convert::TryInto<Vec<String>> for InseeSource {
+impl TryInto<Vec<String>> for InseeSource {
     type Error = anyhow::Error;
 
     fn try_into(self) -> anyhow::Result<Vec<String>> {
         log::info!("Reading {:?}...", &self.zip_filepath);
-        let file = std::fs::File::open(&self.zip_filepath)?;
+        let file = File::open(&self.zip_filepath)?;
         let mut zip_reader = zip::ZipArchive::new(file)?;
         assert!(zip_reader.len() == 1);
         let csv_file_reader = zip_reader.by_index(0)?;

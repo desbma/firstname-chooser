@@ -1,6 +1,8 @@
+use std::cmp::Ordering;
+use std::collections::HashMap;
+
 use indicatif::ProgressIterator;
 use rand::Rng;
-use std::collections::HashMap;
 
 pub type Distance = decorum::R64; // f64 with total ordering
 
@@ -58,9 +60,9 @@ impl LevenshteinGraph {
 
     pub fn get_distance(&self, a: usize, b: usize) -> Distance {
         match a.cmp(&b) {
-            std::cmp::Ordering::Equal => 0.0.into(),
-            std::cmp::Ordering::Less => self.distances[a][b - a - 1],
-            std::cmp::Ordering::Greater => self.distances[b][a - b - 1],
+            Ordering::Equal => 0.0.into(),
+            Ordering::Less => self.distances[a][b - a - 1],
+            Ordering::Greater => self.distances[b][a - b - 1],
         }
     }
 
