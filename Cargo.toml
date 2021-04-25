@@ -16,6 +16,7 @@ crossbeam = "0.8"
 csv = "1.1"
 decorum = "0.3"
 dialoguer = "0.8"
+heck = "0.3"
 log = { version = "0.4", features = ["max_level_trace", "release_max_level_info"] }
 indicatif = "0.15"
 itertools = "0.10"

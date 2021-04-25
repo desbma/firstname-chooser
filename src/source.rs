@@ -1,5 +1,7 @@
-use crate::Sex;
+use heck::TitleCase;
 use itertools::Itertools;
+
+use crate::Sex;
 
 pub struct InseeSource {
     zip_filepath: std::path::PathBuf,
@@ -10,11 +12,13 @@ pub struct InseeSource {
 fn title_case(s: String) -> String {
     // we don't use Inflector because of https://github.com/whatisinternet/Inflector/issues/79
 
-    let mut c = s.chars();
-    match c.next() {
-        None => String::new(),
-        Some(f) => f.to_uppercase().collect::<String>() + &c.as_str().to_lowercase(),
-    }
+    // let mut c = s.chars();
+    // match c.next() {
+    //     None => String::new(),
+    //     Some(f) => f.to_uppercase().collect::<String>() + &c.as_str().to_lowercase(),
+    // }
+
+    s.to_title_case()
 }
 
 // https://www.insee.fr/fr/statistiques/2540004?sommaire=4767262
@@ -81,5 +85,17 @@ impl std::convert::TryInto<Vec<String>> for InseeSource {
         log::info!("Got {} names", rows.len());
 
         Ok(rows)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_title_case() {
+        assert_eq!(title_case("BOB".to_string()), "Bob");
+        assert_eq!(title_case("bob".to_string()), "Bob");
+        assert_eq!(title_case("BOB-JOHN".to_string()), "Bob John");
     }
 }
