@@ -14,7 +14,7 @@ pub struct InseeSource {
 }
 
 // https://stackoverflow.com/a/38406885
-fn title_case(s: String) -> String {
+fn title_case(s: &str) -> String {
     // we don't use Inflector because of https://github.com/whatisinternet/Inflector/issues/79
 
     // let mut c = s.chars();
@@ -53,10 +53,10 @@ impl InseeSource {
     }
 }
 
-impl TryInto<Vec<String>> for InseeSource {
+impl TryInto<(Vec<String>, Vec<f64>)> for InseeSource {
     type Error = anyhow::Error;
 
-    fn try_into(self) -> anyhow::Result<Vec<String>> {
+    fn try_into(self) -> anyhow::Result<(Vec<String>, Vec<f64>)> {
         log::info!("Reading {:?}...", &self.zip_filepath);
         let file = File::open(&self.zip_filepath)?;
         let mut zip_reader = zip::ZipArchive::new(file)?;
@@ -67,29 +67,48 @@ impl TryInto<Vec<String>> for InseeSource {
             .from_reader(csv_file_reader);
 
         log::info!("Parsing CSV data...");
-        let rows: Vec<String> = csv
+        let processed_rows: Vec<_> = csv
             .records()
             .map(Result::unwrap)
             .filter(|r| {
-                // filter sex
+                // Filter sex
                 r.get(0).unwrap()
                     == match &self.sex {
                         Sex::MALE => "1",
                         Sex::FEMALE => "2",
                     }
             })
-            .map(|r| r.get(1).unwrap().to_owned())
-            .dedup()
-            .filter(|n| n.len() > 1) // filter out single letters
-            .filter(|n| *n != "_PRENOMS_RARES") // filter out source crap
-            .map(|n| unidecode::unidecode(&n)) // normalize accents
-            .dedup()
-            .map(title_case)
+            .filter(|r| {
+                let name = r.get(1).unwrap();
+                name.len() > 1  // Filter out single letters
+                && name != "_PRENOMS_RARES" // Filter out source crap
+            })
+            .map(|r| {
+                (
+                    unidecode::unidecode(&title_case(&r.get(1).unwrap())), // Normalize case & accents
+                    r.get(3).unwrap().parse::<usize>().unwrap(),           // Parse freq
+                )
+            })
             .collect();
-        // TODO keep some other signals like frequency
-        log::info!("Got {} names", rows.len());
+        let freq_max: usize = processed_rows.iter().map(|r| r.1).max().unwrap();
 
-        Ok(rows)
+        let names: Vec<String> = processed_rows
+            .iter()
+            .map(|r| r.0.to_owned())
+            .dedup()
+            .collect();
+        let weightings: Vec<f64> = processed_rows
+            .iter()
+            .group_by(|r| r.0.to_owned())
+            .into_iter()
+            .map(|(_, fs)| fs.map(|e| e.1).sum::<usize>() as f64 / freq_max as f64)
+            .collect();
+
+        assert_eq!(names.len(), weightings.len());
+
+        log::info!("Got {} names", names.len());
+
+        Ok((names, weightings))
     }
 }
 
@@ -99,8 +118,8 @@ mod tests {
 
     #[test]
     fn test_title_case() {
-        assert_eq!(title_case("BOB".to_string()), "Bob");
-        assert_eq!(title_case("bob".to_string()), "Bob");
-        assert_eq!(title_case("BOB-JOHN".to_string()), "Bob John");
+        assert_eq!(title_case("BOB"), "Bob");
+        assert_eq!(title_case("bob"), "Bob");
+        assert_eq!(title_case("BOB-JOHN"), "Bob John");
     }
 }

@@ -1,9 +1,10 @@
 #![feature(test)]
 extern crate test;
 
-use arg_enum_proc_macro::ArgEnum;
 use std::collections::HashMap;
 use std::convert::TryInto;
+
+use arg_enum_proc_macro::ArgEnum;
 use structopt::StructOpt;
 
 mod graph;
@@ -38,8 +39,9 @@ fn main() {
 
     // Get names
     let source = source::InseeSource::new(&opts.sex).expect("Failed to initialize data source");
-    let names: Vec<String> = source.try_into().expect("Failed to build names");
-    log::debug!("{:?}", names);
+    let (names, weightings): (Vec<String>, Vec<f64>) =
+        source.try_into().expect("Failed to build names");
+    log::debug!("{:#?}", names);
 
     // Build graph
     let mut graph = graph::LevenshteinGraph::new();
@@ -87,7 +89,7 @@ fn main() {
         }
 
         // Next recommandation
-        cur_idx = graph.recommend(&prev_choices);
+        cur_idx = graph.recommend(&prev_choices, &weightings);
     }
 }
 
@@ -99,7 +101,7 @@ mod tests {
     #[bench]
     fn bench_fill_graph(b: &mut Bencher) {
         let source = source::InseeSource::new(&Sex::MALE).unwrap();
-        let names: Vec<String> = source.try_into().unwrap();
+        let (names, _): (Vec<String>, Vec<f64>) = source.try_into().unwrap();
 
         b.iter(|| {
             let mut graph = graph::LevenshteinGraph::new();

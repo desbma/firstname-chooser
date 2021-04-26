@@ -79,6 +79,7 @@ impl LevenshteinGraph {
         rng.gen_range(0..self.distances.len())
     }
 
+    // Evaluate node according to previous choices
     fn evaluate(&self, idx: usize, prev_choices: &HashMap<usize, bool>) -> Distance {
         let mut v: Distance = 0.0.into();
         for prev_choice in prev_choices {
@@ -91,12 +92,13 @@ impl LevenshteinGraph {
         v
     }
 
-    pub fn recommend(&self, prev_choices: &HashMap<usize, bool>) -> usize {
+    pub fn recommend(&self, prev_choices: &HashMap<usize, bool>, ponderations: &[f64]) -> usize {
         self.distances
             .iter()
             .enumerate()
-            .filter(|(i, _)| !prev_choices.contains_key(i)) // exclude already evaluated choices
-            .min_by_key(|(i, _)| self.evaluate(*i, prev_choices))
+            .filter(|(i, _)| !prev_choices.contains_key(i)) // Exclude already evaluated choices
+            // Minimize distance, and substract ponderation TODO tweak factor and use prev_choices.len()
+            .min_by_key(|(i, _)| self.evaluate(*i, prev_choices) - ponderations[*i] * 0.05)
             .unwrap()
             .0
     }
