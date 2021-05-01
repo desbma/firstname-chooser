@@ -13,6 +13,8 @@ pub struct InseeSource {
     sex: Sex,
 }
 
+const MIN_YEAR: u16 = 1970;
+
 // https://stackoverflow.com/a/38406885
 fn title_case(s: &str) -> String {
     // we don't use Inflector because of https://github.com/whatisinternet/Inflector/issues/79
@@ -82,6 +84,9 @@ impl TryInto<(Vec<String>, Vec<f64>)> for InseeSource {
                 let name = r.get(1).unwrap();
                 name.len() > 1  // Filter out single letters
                 && name != "_PRENOMS_RARES" // Filter out source crap
+            })
+            .filter(|r| {
+                r.get(2).unwrap().parse::<u16>().unwrap_or(0) >= MIN_YEAR // Filter out old years
             })
             .map(|r| {
                 (
