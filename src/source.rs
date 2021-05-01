@@ -90,19 +90,27 @@ impl TryInto<(Vec<String>, Vec<f64>)> for InseeSource {
                 )
             })
             .collect();
-        let freq_max: usize = processed_rows.iter().map(|r| r.1).max().unwrap();
 
         let names: Vec<String> = processed_rows
             .iter()
             .map(|r| r.0.to_owned())
             .dedup()
             .collect();
+        let freq_max = processed_rows
+            .iter()
+            .group_by(|r| r.0.to_owned())
+            .into_iter()
+            .map(|(_, fs)| fs.map(|e| e.1).sum::<usize>())
+            .max()
+            .unwrap();
         let weightings: Vec<f64> = processed_rows
             .iter()
             .group_by(|r| r.0.to_owned())
             .into_iter()
             .map(|(_, fs)| fs.map(|e| e.1).sum::<usize>() as f64 / freq_max as f64)
             .collect();
+
+        debug_assert!(weightings.iter().all(|w| (&0.0..=&1.0).contains(&w)));
 
         assert_eq!(names.len(), weightings.len());
 

@@ -70,7 +70,7 @@ impl LevenshteinGraph {
         let word_a = &words[a];
         let word_b = &words[b];
         let dist = strsim::normalized_levenshtein(word_a, word_b);
-        log::trace!("#{} {:?} - #{} {:?} = {}", a, word_a, b, word_b, dist);
+        //log::trace!("#{} {:?} - #{} {:?} = {}", a, word_a, b, word_b, dist);
         (1.0 - dist).into()
     }
 

@@ -42,6 +42,7 @@ fn main() {
     let (names, weightings): (Vec<String>, Vec<f64>) =
         source.try_into().expect("Failed to build names");
     log::debug!("{:#?}", names);
+    log::debug!("{:#?}", weightings);
 
     // Build graph
     let mut graph = graph::LevenshteinGraph::new();
