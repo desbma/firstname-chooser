@@ -74,8 +74,8 @@ fn main() {
     let mut prev_choices: HashMap<usize, bool> = HashMap::new();
     let str_choices = vec![
         "Hell yeah!",
-        "Mhh maybe...",
         "Errh.. nope",
+        "No, but suggest a similar name",
         "Remind me of my previous choices",
     ];
     let mut cur_idx = graph.random();
@@ -87,22 +87,26 @@ fn main() {
                 names[cur_idx]
             ))
             .items(&str_choices)
-            .default(2)
+            .default(1)
             .interact()
             .unwrap();
 
         // React to choice
         match choice {
-            0 | 1 | 2 => {
-                // TODO differenciate between 0 and 1
-                prev_choices.insert(cur_idx, choice != 2);
+            0 | 1 => {
+                prev_choices.insert(cur_idx, choice == 0);
+            }
+            2 => {
+                prev_choices.insert(cur_idx, false);
+                cur_idx = graph.closest(cur_idx, &prev_choices);
+                continue;
             }
             3 => {
                 for (i, (idx, liked)) in prev_choices.iter().enumerate() {
                     eprintln!(
                         "#{:02} {} {:?}",
                         i,
-                        if *liked { "👍" } else { "👎" },
+                        if *liked { '+' } else { '-' },
                         names[*idx]
                     );
                 }

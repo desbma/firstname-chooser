@@ -92,6 +92,16 @@ impl LevenshteinGraph {
         v
     }
 
+    pub fn closest(&self, idx: usize, prev_choices: &HashMap<usize, bool>) -> usize {
+        self.distances
+            .iter()
+            .enumerate()
+            .filter(|(i, _)| (*i != idx) && !prev_choices.contains_key(i)) // Exclude already evaluated choices
+            .min_by_key(|(i, _)| self.get_distance(idx, *i))
+            .unwrap()
+            .0
+    }
+
     pub fn recommend(
         &self,
         prev_choices: &HashMap<usize, bool>,

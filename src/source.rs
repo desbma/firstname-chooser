@@ -111,7 +111,7 @@ impl TryInto<(Vec<String>, Vec<f64>)> for InseeSource {
         let processed_rows: Vec<_> = processed_rows_iter
             .map(|r| {
                 (
-                    unidecode::unidecode(&title_case(&r.get(1).unwrap())), // Normalize case & accents
+                    unidecode::unidecode(&title_case(&r.get(1).unwrap())), // Normalize case & accents TODO do this before name filtering
                     r.get(3).unwrap().parse::<usize>().unwrap(),           // Parse freq
                 )
             })
