@@ -28,9 +28,21 @@ pub struct CommandLineOpts {
     )]
     pub sex: Sex,
 
-    /// Exclude data below this year for frequency weighting
+    /// Min name length
+    #[structopt(short, long, default_value = "3")]
+    pub min_name_lenth: u8,
+
+    /// Exclude compound names
     #[structopt(short, long)]
+    pub exclude_compound: bool,
+
+    /// Exclude data below this year for frequency weighting
+    #[structopt(long)]
     pub min_year: Option<u16>,
+
+    /// How much to favour common names compared to rare ones
+    #[structopt(short, long, default_value = "0.5")]
+    pub commonness_factor: f64,
 }
 
 fn main() {
@@ -42,8 +54,13 @@ fn main() {
     log::trace!("{:?}", opts);
 
     // Get names
-    let source = source::InseeSource::new(&opts.sex, opts.min_year)
-        .expect("Failed to initialize data source");
+    let source = source::InseeSource::new(
+        &opts.sex,
+        opts.min_name_lenth,
+        opts.exclude_compound,
+        opts.min_year,
+    )
+    .expect("Failed to initialize data source");
     let (names, weightings): (Vec<String>, Vec<f64>) =
         source.try_into().expect("Failed to build names");
     log::debug!("{:#?}", names);
@@ -95,7 +112,7 @@ fn main() {
         }
 
         // Next recommandation
-        cur_idx = graph.recommend(&prev_choices, &weightings);
+        cur_idx = graph.recommend(&prev_choices, &weightings, opts.commonness_factor);
     }
 }
 

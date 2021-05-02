@@ -6,8 +6,6 @@ use rand::Rng;
 
 pub type Distance = decorum::R64; // f64 with total ordering
 
-const COMMONNESS_FACTOR: f64 = 0.6;
-
 pub struct LevenshteinGraph {
     distances: Vec<Vec<Distance>>,
 }
@@ -94,15 +92,20 @@ impl LevenshteinGraph {
         v
     }
 
-    pub fn recommend(&self, prev_choices: &HashMap<usize, bool>, ponderations: &[f64]) -> usize {
+    pub fn recommend(
+        &self,
+        prev_choices: &HashMap<usize, bool>,
+        weightings: &[f64],
+        weighting_factor: f64,
+    ) -> usize {
         self.distances
             .iter()
             .enumerate()
             .filter(|(i, _)| !prev_choices.contains_key(i)) // Exclude already evaluated choices
-            // Minimize distance, and substract ponderation
+            // Minimize distance, and substract weighting
             .min_by_key(|(i, _)| {
                 self.evaluate(*i, prev_choices)
-                    - (ponderations[*i] * COMMONNESS_FACTOR) * prev_choices.len() as f64
+                    - (weightings[*i] * weighting_factor * prev_choices.len() as f64)
             })
             .unwrap()
             .0

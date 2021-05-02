@@ -11,6 +11,8 @@ use crate::Sex;
 pub struct InseeSource {
     zip_filepath: PathBuf,
     sex: Sex,
+    min_name_lenth: u8,
+    exclude_compound: bool,
     min_year: Option<u16>,
 }
 
@@ -32,7 +34,12 @@ const INSEE_ZIP_URL: &str = "https://www.insee.fr/fr/statistiques/fichier/254000
 const INSEE_ZIP_FILENAME: &str = "nat2019_csv.zip";
 
 impl InseeSource {
-    pub fn new(sex: &Sex, min_year: Option<u16>) -> anyhow::Result<InseeSource> {
+    pub fn new(
+        sex: &Sex,
+        min_name_lenth: u8,
+        exclude_compound: bool,
+        min_year: Option<u16>,
+    ) -> anyhow::Result<InseeSource> {
         let binary_name = env!("CARGO_PKG_NAME");
         let xdg_dirs = xdg::BaseDirectories::with_prefix(binary_name)?;
         let zip_filepath = match xdg_dirs.find_cache_file(INSEE_ZIP_FILENAME) {
@@ -50,6 +57,8 @@ impl InseeSource {
         Ok(InseeSource {
             zip_filepath,
             sex: sex.to_owned(),
+            min_name_lenth,
+            exclude_compound,
             min_year,
         })
     }
@@ -82,10 +91,16 @@ impl TryInto<(Vec<String>, Vec<f64>)> for InseeSource {
                 })
                 .filter(|r| {
                     let name = r.get(1).unwrap();
-                    name.len() > 1  // Filter out single letters
+                    name.len() >= self.min_name_lenth.into()  // Filter out too short names
                 && name != "_PRENOMS_RARES" // Filter out source crap
                 }),
         );
+        if self.exclude_compound {
+            processed_rows_iter = Box::new(processed_rows_iter.filter(|r| {
+                let n = r.get(1).unwrap();
+                !n.contains(' ') && !n.contains('\'')
+            }));
+        }
         if self.min_year.is_some() {
             // https://github.com/rust-lang/rust/issues/43407
             processed_rows_iter = Box::new(processed_rows_iter.filter(|r| {
