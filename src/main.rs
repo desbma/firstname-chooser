@@ -27,6 +27,10 @@ pub struct CommandLineOpts {
         case_insensitive = true
     )]
     pub sex: Sex,
+
+    /// Exclude data below this year for frequency weighting
+    #[structopt(short, long)]
+    pub min_year: Option<u16>,
 }
 
 fn main() {
@@ -38,7 +42,8 @@ fn main() {
     log::trace!("{:?}", opts);
 
     // Get names
-    let source = source::InseeSource::new(&opts.sex).expect("Failed to initialize data source");
+    let source = source::InseeSource::new(&opts.sex, opts.min_year)
+        .expect("Failed to initialize data source");
     let (names, weightings): (Vec<String>, Vec<f64>) =
         source.try_into().expect("Failed to build names");
     log::debug!("{:#?}", names);

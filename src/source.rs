@@ -11,9 +11,8 @@ use crate::Sex;
 pub struct InseeSource {
     zip_filepath: PathBuf,
     sex: Sex,
+    min_year: Option<u16>,
 }
-
-const MIN_YEAR: u16 = 1970;
 
 // https://stackoverflow.com/a/38406885
 fn title_case(s: &str) -> String {
@@ -33,7 +32,7 @@ const INSEE_ZIP_URL: &str = "https://www.insee.fr/fr/statistiques/fichier/254000
 const INSEE_ZIP_FILENAME: &str = "nat2019_csv.zip";
 
 impl InseeSource {
-    pub fn new(sex: &Sex) -> anyhow::Result<InseeSource> {
+    pub fn new(sex: &Sex, min_year: Option<u16>) -> anyhow::Result<InseeSource> {
         let binary_name = env!("CARGO_PKG_NAME");
         let xdg_dirs = xdg::BaseDirectories::with_prefix(binary_name)?;
         let zip_filepath = match xdg_dirs.find_cache_file(INSEE_ZIP_FILENAME) {
@@ -51,6 +50,7 @@ impl InseeSource {
         Ok(InseeSource {
             zip_filepath,
             sex: sex.to_owned(),
+            min_year,
         })
     }
 }
@@ -69,25 +69,31 @@ impl TryInto<(Vec<String>, Vec<f64>)> for InseeSource {
             .from_reader(csv_file_reader);
 
         log::info!("Parsing CSV data...");
-        let processed_rows: Vec<_> = csv
-            .records()
-            .map(Result::unwrap)
-            .filter(|r| {
-                // Filter sex
-                r.get(0).unwrap()
-                    == match &self.sex {
-                        Sex::MALE => "1",
-                        Sex::FEMALE => "2",
-                    }
-            })
-            .filter(|r| {
-                let name = r.get(1).unwrap();
-                name.len() > 1  // Filter out single letters
+        let mut processed_rows_iter: Box<dyn Iterator<Item = _>> = Box::new(
+            csv.records()
+                .map(Result::unwrap)
+                .filter(|r| {
+                    // Filter sex
+                    r.get(0).unwrap()
+                        == match &self.sex {
+                            Sex::MALE => "1",
+                            Sex::FEMALE => "2",
+                        }
+                })
+                .filter(|r| {
+                    let name = r.get(1).unwrap();
+                    name.len() > 1  // Filter out single letters
                 && name != "_PRENOMS_RARES" // Filter out source crap
-            })
-            .filter(|r| {
-                r.get(2).unwrap().parse::<u16>().unwrap_or(0) >= MIN_YEAR // Filter out old years
-            })
+                }),
+        );
+        if self.min_year.is_some() {
+            // https://github.com/rust-lang/rust/issues/43407
+            processed_rows_iter = Box::new(processed_rows_iter.filter(|r| {
+                // Filter out old years
+                r.get(2).unwrap().parse::<u16>().unwrap_or(0) >= self.min_year.unwrap()
+            }));
+        }
+        let processed_rows: Vec<_> = processed_rows_iter
             .map(|r| {
                 (
                     unidecode::unidecode(&title_case(&r.get(1).unwrap())), // Normalize case & accents
