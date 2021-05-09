@@ -90,32 +90,31 @@ impl TryInto<(Vec<String>, Vec<f64>)> for InseeSource {
                         }
                 })
                 .filter(|r| {
-                    let name = r.get(1).unwrap();
-                    name.len() >= self.min_name_lenth.into()  // Filter out too short names
-                && name != "_PRENOMS_RARES" // Filter out source crap
+                    r.get(1).unwrap() != "_PRENOMS_RARES" // Filter out source crap
+                })
+                .map(|r| {
+                    (
+                        unidecode::unidecode(&title_case(&r.get(1).unwrap())), // Normalize case & accents
+                        r.get(3).unwrap().parse::<usize>().unwrap(),           // Parse freq
+                        r.get(2).unwrap().parse::<u16>().unwrap_or(0),         // Parse year
+                    )
+                })
+                .filter(|r| {
+                    r.0.len() >= self.min_name_lenth.into() // Filter out too short names
                 }),
         );
         if self.exclude_compound {
-            processed_rows_iter = Box::new(processed_rows_iter.filter(|r| {
-                let n = r.get(1).unwrap();
-                !n.contains(' ') && !n.contains('\'')
-            }));
+            processed_rows_iter =
+                Box::new(processed_rows_iter.filter(|r| !r.0.contains(' ') && !r.0.contains('\'')));
         }
         if self.min_year.is_some() {
             // https://github.com/rust-lang/rust/issues/43407
             processed_rows_iter = Box::new(processed_rows_iter.filter(|r| {
                 // Filter out old years
-                r.get(2).unwrap().parse::<u16>().unwrap_or(0) >= self.min_year.unwrap()
+                r.2 >= self.min_year.unwrap()
             }));
         }
-        let processed_rows: Vec<_> = processed_rows_iter
-            .map(|r| {
-                (
-                    unidecode::unidecode(&title_case(&r.get(1).unwrap())), // Normalize case & accents TODO do this before name filtering
-                    r.get(3).unwrap().parse::<usize>().unwrap(),           // Parse freq
-                )
-            })
-            .collect();
+        let processed_rows: Vec<_> = processed_rows_iter.collect();
 
         let names: Vec<String> = processed_rows
             .iter()
