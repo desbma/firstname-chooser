@@ -78,7 +78,7 @@ fn main() {
     let negative = console::Style::new().red();
     let str_choices = vec![
         positive.apply_to("Hell yeah!").to_string(),
-        negative.apply_to("Errh.. nope").to_string(),
+        negative.apply_to("Erh… nope").to_string(),
         negative
             .apply_to("No, but suggest a similar name")
             .to_string(),
