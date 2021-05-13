@@ -40,12 +40,16 @@ impl State {
         let mut choices = VecDeque::new();
         for result in csv_reader.deserialize() {
             let record: StoredChoice = result?;
+            let index = match names.iter().position(|n| n == &record.name) {
+                Some(i) => i,
+                None => {
+                    log::warn!("Unable to find index of previous choice {:?}", record.name);
+                    continue;
+                }
+            };
             choices.push_back(Choice {
-                index: names
-                    .iter()
-                    .position(|n| n == &record.name)
-                    .ok_or_else(|| anyhow::anyhow!("Unable to find index of {}", record.name))?,
                 name: record.name,
+                index,
                 liked: record.liked,
             });
         }

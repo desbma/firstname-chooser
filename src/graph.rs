@@ -93,14 +93,13 @@ impl LevenshteinGraph {
         v
     }
 
-    pub fn closest(&self, idx: usize, prev_choices: &state::State) -> usize {
+    pub fn closest(&self, idx: usize, prev_choices: &state::State) -> Option<usize> {
         self.distances
             .iter()
             .enumerate()
             .filter(|(i, _)| (*i != idx) && !prev_choices.into_iter().any(|c| c.index == *i)) // Exclude already evaluated choices
             .min_by_key(|(i, _)| self.get_distance(idx, *i))
-            .unwrap()
-            .0
+            .map(|(i, _)| i)
     }
 
     pub fn recommend(
@@ -108,7 +107,7 @@ impl LevenshteinGraph {
         prev_choices: &state::State,
         weightings: &[f64],
         weighting_factor: f64,
-    ) -> usize {
+    ) -> Option<usize> {
         self.distances
             .iter()
             .enumerate()
@@ -118,8 +117,7 @@ impl LevenshteinGraph {
                 self.evaluate(*i, prev_choices)
                     - (weightings[*i] * weighting_factor * prev_choices.into_iter().len() as f64)
             })
-            .unwrap()
-            .0
+            .map(|(i, _)| i)
     }
 }
 

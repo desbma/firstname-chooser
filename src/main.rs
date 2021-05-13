@@ -108,7 +108,9 @@ fn main() {
                 state
                     .save(&names[cur_idx], cur_idx, false)
                     .expect("Unable to save choice");
-                cur_idx = graph.closest(cur_idx, &state);
+                cur_idx = graph
+                    .closest(cur_idx, &state)
+                    .expect("Failed to find new name");
                 continue;
             }
             3 => {
@@ -126,7 +128,9 @@ fn main() {
         }
 
         // Next recommandation
-        cur_idx = graph.recommend(&state, &weightings, opts.commonness_factor);
+        cur_idx = graph
+            .recommend(&state, &weightings, opts.commonness_factor)
+            .expect("Failed to find new name");
     }
 }
 
