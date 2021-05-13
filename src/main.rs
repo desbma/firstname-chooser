@@ -1,7 +1,6 @@
 #![feature(test)]
 extern crate test;
 
-use std::collections::HashMap;
 use std::convert::TryInto;
 
 use arg_enum_proc_macro::ArgEnum;
@@ -9,6 +8,7 @@ use structopt::StructOpt;
 
 mod graph;
 mod source;
+mod state;
 
 #[derive(ArgEnum, Clone, Debug)]
 pub enum Sex {
@@ -70,8 +70,10 @@ fn main() {
     let mut graph = graph::LevenshteinGraph::new();
     graph.fill(&names);
 
+    // Load previous state
+    let mut state = state::State::new(&names).expect("Unable to load saved state");
+
     // Main loop
-    let mut prev_choices: HashMap<usize, bool> = HashMap::new();
     let str_choices = vec![
         "Hell yeah!",
         "Errh.. nope",
@@ -94,20 +96,24 @@ fn main() {
         // React to choice
         match choice {
             0 | 1 => {
-                prev_choices.insert(cur_idx, choice == 0);
+                state
+                    .save(&names[cur_idx], cur_idx, choice == 0)
+                    .expect("Unable to save choice");
             }
             2 => {
-                prev_choices.insert(cur_idx, false);
-                cur_idx = graph.closest(cur_idx, &prev_choices);
+                state
+                    .save(&names[cur_idx], cur_idx, false)
+                    .expect("Unable to save choice");
+                cur_idx = graph.closest(cur_idx, &state);
                 continue;
             }
             3 => {
-                for (i, (idx, liked)) in prev_choices.iter().enumerate() {
+                for (i, prev_choice) in state.into_iter().enumerate() {
                     eprintln!(
                         "#{:02} {} {:?}",
-                        i,
-                        if *liked { '+' } else { '-' },
-                        names[*idx]
+                        i + 1,
+                        if prev_choice.liked { '+' } else { '-' },
+                        prev_choice.name
                     );
                 }
                 continue;
@@ -116,7 +122,7 @@ fn main() {
         }
 
         // Next recommandation
-        cur_idx = graph.recommend(&prev_choices, &weightings, opts.commonness_factor);
+        cur_idx = graph.recommend(&state, &weightings, opts.commonness_factor);
     }
 }
 

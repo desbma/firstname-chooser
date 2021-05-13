@@ -1,8 +1,9 @@
 use std::cmp::Ordering;
-use std::collections::HashMap;
 
 use indicatif::ProgressIterator;
 use rand::Rng;
+
+use crate::state;
 
 pub type Distance = decorum::R64; // f64 with total ordering
 
@@ -80,11 +81,11 @@ impl LevenshteinGraph {
     }
 
     // Evaluate node according to previous choices
-    fn evaluate(&self, idx: usize, prev_choices: &HashMap<usize, bool>) -> Distance {
+    fn evaluate(&self, idx: usize, prev_choices: &state::State) -> Distance {
         let mut v: Distance = 0.0.into();
-        for prev_choice in prev_choices {
-            let dist = self.get_distance(idx, *prev_choice.0);
-            v += match prev_choice.1 {
+        for prev_choice in prev_choices.into_iter() {
+            let dist = self.get_distance(idx, prev_choice.index);
+            v += match prev_choice.liked {
                 true => dist,
                 false => -dist,
             };
@@ -92,11 +93,11 @@ impl LevenshteinGraph {
         v
     }
 
-    pub fn closest(&self, idx: usize, prev_choices: &HashMap<usize, bool>) -> usize {
+    pub fn closest(&self, idx: usize, prev_choices: &state::State) -> usize {
         self.distances
             .iter()
             .enumerate()
-            .filter(|(i, _)| (*i != idx) && !prev_choices.contains_key(i)) // Exclude already evaluated choices
+            .filter(|(i, _)| (*i != idx) && !prev_choices.into_iter().any(|c| c.index == *i)) // Exclude already evaluated choices
             .min_by_key(|(i, _)| self.get_distance(idx, *i))
             .unwrap()
             .0
@@ -104,18 +105,18 @@ impl LevenshteinGraph {
 
     pub fn recommend(
         &self,
-        prev_choices: &HashMap<usize, bool>,
+        prev_choices: &state::State,
         weightings: &[f64],
         weighting_factor: f64,
     ) -> usize {
         self.distances
             .iter()
             .enumerate()
-            .filter(|(i, _)| !prev_choices.contains_key(i)) // Exclude already evaluated choices
+            .filter(|(i, _)| !prev_choices.into_iter().any(|c| c.index == *i)) // Exclude already evaluated choices
             // Minimize distance, and substract weighting
             .min_by_key(|(i, _)| {
                 self.evaluate(*i, prev_choices)
-                    - (weightings[*i] * weighting_factor * prev_choices.len() as f64)
+                    - (weightings[*i] * weighting_factor * prev_choices.into_iter().len() as f64)
             })
             .unwrap()
             .0
