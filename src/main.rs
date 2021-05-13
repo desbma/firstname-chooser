@@ -74,11 +74,15 @@ fn main() {
     let mut state = state::State::new(&names).expect("Unable to load saved state");
 
     // Main loop
+    let positive = console::Style::new().green();
+    let negative = console::Style::new().red();
     let str_choices = vec![
-        "Hell yeah!",
-        "Errh.. nope",
-        "No, but suggest a similar name",
-        "Remind me of my previous choices",
+        positive.apply_to("Hell yeah!").to_string(),
+        negative.apply_to("Errh.. nope").to_string(),
+        negative
+            .apply_to("No, but suggest a similar name")
+            .to_string(),
+        "Remind me of my previous choices".to_string(),
     ];
     let mut cur_idx = graph.random();
     loop {
@@ -109,12 +113,12 @@ fn main() {
             }
             3 => {
                 for (i, prev_choice) in state.into_iter().enumerate() {
-                    eprintln!(
-                        "#{:02} {} {:?}",
-                        i + 1,
-                        if prev_choice.liked { '+' } else { '-' },
-                        prev_choice.name
-                    );
+                    let s = format!("#{:02} {:?}", i + 1, prev_choice.name,);
+                    let style = match prev_choice.liked {
+                        true => &positive,
+                        false => &negative,
+                    };
+                    eprintln!("{}", style.apply_to(s));
                 }
                 continue;
             }

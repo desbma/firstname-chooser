@@ -12,6 +12,7 @@ panic = "abort"
 [dependencies]
 arg_enum_proc_macro = "0.3"
 anyhow = "1.0"
+console = { version = "0.14", default-features = false }
 crossbeam = "0.8"
 csv = "1.1"
 decorum = "0.3"

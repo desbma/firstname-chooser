@@ -345,6 +345,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "arg_enum_proc_macro",
+ "console",
  "crossbeam",
  "csv",
  "decorum",
