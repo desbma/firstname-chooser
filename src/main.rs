@@ -127,7 +127,7 @@ mod tests {
 
     #[bench]
     fn bench_fill_graph(b: &mut Bencher) {
-        let source = source::InseeSource::new(&Sex::MALE).unwrap();
+        let source = source::InseeSource::new(&Sex::MALE, 3, false, None).unwrap();
         let (names, _): (Vec<String>, Vec<f64>) = source.try_into().unwrap();
 
         b.iter(|| {
