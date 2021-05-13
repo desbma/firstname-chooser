@@ -31,6 +31,7 @@ I have you covered. Actually Rust & graph theory do.
 - Graph in memory is a 2D vector of distances, to represent a "half matrix" (distance between a and b is the same as between b and a, so no need to store it twice)
 - Graph is built using a thread pool for performance
 - Once the graph construction is fast enough, most of the tuning is actually in the optional source filtering, ie:
+  - computing name weighting from source data
   - removing names given before year X
   - removing compound names
   - removing too short names
