@@ -94,9 +94,9 @@ impl TryInto<(Vec<String>, Vec<f64>)> for InseeSource {
                 })
                 .map(|r| {
                     (
-                        unidecode::unidecode(&title_case(&r.get(1).unwrap())), // Normalize case & accents
-                        r.get(3).unwrap().parse::<usize>().unwrap(),           // Parse freq
-                        r.get(2).unwrap().parse::<u16>().unwrap_or(0),         // Parse year
+                        unidecode::unidecode(&title_case(r.get(1).unwrap())), // Normalize case & accents
+                        r.get(3).unwrap().parse::<usize>().unwrap(),          // Parse freq
+                        r.get(2).unwrap().parse::<u16>().unwrap_or(0),        // Parse year
                     )
                 })
                 .filter(|r| {
