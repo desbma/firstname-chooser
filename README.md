@@ -39,6 +39,12 @@ I have you covered. Actually Rust & graph theory do.
   - removing compound names
   - removing too short names
 
+## Usage
+
+You need a Rust build environment for example from [rustup](https://rustup.rs/).
+
+Set toolchain to nightly with `rustup override set nightly` and run `cargo run --release -- -h` to build and get command line help.
+
 ## Data source
 
 For now this only contains a [source for French names](https://www.insee.fr/fr/statistiques/2540004?sommaire=4767262).
