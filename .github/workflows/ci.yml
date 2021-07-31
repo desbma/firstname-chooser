@@ -24,6 +24,9 @@ jobs:
           profile: minimal
           toolchain: nightly
           override: true
+      - run: |
+          mkdir ~/.cache/firstname-chooser
+          cp ./data/nat2019_csv.zip ~/.cache/firstname-chooser/
       - run: cargo test --verbose
 
   clippy:
