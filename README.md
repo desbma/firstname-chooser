@@ -1,5 +1,8 @@
 # firstname-chooser
 
+[![Build status](https://github.com/desbma/firstname-chooser/actions/workflows/ci.yml/badge.svg)](https://github.com/desbma/firstname-chooser/actions)
+[![License](https://img.shields.io/github/license/desbma/firstname-chooser.svg?style=flat)](https://github.com/desbma/firstname-chooser/blob/master/LICENSE)
+
 > There are only two hard things in Computer Science: cache invalidation and naming things.
 >
 > -- Phil Karlton
